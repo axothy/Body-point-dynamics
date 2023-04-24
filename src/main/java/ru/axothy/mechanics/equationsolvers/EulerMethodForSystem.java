@@ -40,18 +40,19 @@ public class EulerMethodForSystem {
 
             w.add(new Point3D(wx, wy, wz)); // --> w(i)
 
-            //dx.add(x.get(i-1)); //v1: как оператор сдвига на такт назад
-            //dx.add(h * g(x.get(i-1), dy.get(i-1), d2ydt20)); //v2: как h*g(i-1)
-            //dx.add((x.get(i) - x.get(i - 1)) / 2.0); //как конечно разностное выражение
 
-            double dwx = (w.get(i).getX() - w.get(i - 1).getX()) / 2.0;
+            double dwx = (w.get(i).getX() - w.get(i - 1).getX()) / 2.0; //как КР выражение
             double dwy = (w.get(i).getY() - w.get(i - 1).getY()) / 2.0;
             double dwz = (w.get(i).getZ() - w.get(i - 1).getZ()) / 2.0;
+
+            //double dwx = dt * eq.equationRightSide2(d2ydt20, v.get(i-1), w.get(i-1)).getX(); //как h * g ( i -1)
+            //double dwy = dt * eq.equationRightSide2(d2ydt20, v.get(i-1), w.get(i-1)).getY();
+            //double dwz = dt * eq.equationRightSide2(d2ydt20, v.get(i-1), w.get(i-1)).getZ();
 
             dw.add(new Point3D(dwx, dwy, dwz));
 
             i++;
-        } while (i < 1000);
+        } while (i < 25000);
 
         return new BodyPointMovingData(r, v, w);
     }

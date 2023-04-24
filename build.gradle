@@ -37,7 +37,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
     implementation group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
-
+    implementation group: 'org.fxyz3d', name: 'fxyz3d', version: '0.5.4'
 }
 
 test {

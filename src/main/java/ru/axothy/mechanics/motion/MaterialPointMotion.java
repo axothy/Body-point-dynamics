@@ -86,6 +86,10 @@ public class MaterialPointMotion implements Motion {
         return v;
     }
 
+    public MaterialPoint getMotionPoint() {
+        return materialPoint;
+    }
+
     @Override
     public String toString() {
         return "Motion of point: " + materialPoint;

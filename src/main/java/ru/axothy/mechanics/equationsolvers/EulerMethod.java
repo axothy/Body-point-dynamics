@@ -21,7 +21,7 @@ public class EulerMethod {
         double dt = 0.1;
 
         // Вычисляем значения производных и новые значения x и y для каждого шага по времени
-        for (double t = 0; t < 1000; t += dt) {
+        for (double t = 0; t < 25000; t += dt) {
             // Вычисляем значения производных
             double d2x = equation.equationRightSide(new Point3D(x, y, Point3D.ZERO.getZ())).getX();
             double d2y = equation.equationRightSide(new Point3D(x, y, Point3D.ZERO.getZ())).getY();

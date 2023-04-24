@@ -101,6 +101,10 @@ public class BodyPointMotion implements Motion {
         this.data = data;
     }
 
+    public MaterialPoint getMotionPoint() {
+        return bodyPoint;
+    }
+
     public static void main(String[] args) {
         double mass = 50;
         Tensor J = Tensor.UNARY_TENSOR;

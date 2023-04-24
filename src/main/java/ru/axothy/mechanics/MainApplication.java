@@ -22,30 +22,37 @@ import javafx.util.Duration;
 import ru.axothy.mechanics.bodypoint.BodyPoint;
 import ru.axothy.mechanics.bodypoint.MaterialPoint;
 import ru.axothy.mechanics.graphics.CoulombCenterGraphics;
+import ru.axothy.mechanics.graphics.MouseLook;
 import ru.axothy.mechanics.graphics.PointGraphics;
+import ru.axothy.mechanics.graphics.PolyLine3DCustom;
 import ru.axothy.mechanics.motion.BodyPointMotion;
 import ru.axothy.mechanics.motion.MaterialPointMotion;
 import ru.axothy.mechanics.motion.Motion;
 import ru.axothy.mechanics.tensors.Tensor;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
 public class MainApplication extends Application {
     private static final String MAIN_LABEL = "Body-point motion mechanics";
-    private static double coulombConstant = -3;
     public static final int WIDTH = 910;
     public static final int HEIGHT = 685;
     public Line axeX;
     public Line axeY;
     public Group group;
     public Map<PointGraphics, Motion> motions = new HashMap<>();
+    public ArrayList<PolyLine3DCustom> trajectories = new ArrayList<>();
     public CoulombCenterGraphics coulombCenter;
     public static PerspectiveCamera camera;
     public SubScene scene;
+    public MouseLook mouseLook;
     public Button addMaterialPointButton;
     public TextField massMaterialPointInput;
     public TextField R0MaterialInput;
@@ -57,7 +64,7 @@ public class MainApplication extends Application {
     public Button clearButton;
 
     public static final Color MPCOLOR = Color.RED;
-    public static final Color BPCOLOR = Color.YELLOW;
+    public static final Color BPCOLOR = Color.WHITE;
 
 
     public void init() {
@@ -71,6 +78,8 @@ public class MainApplication extends Application {
         //Setting coulombCenter position
         coulombCenter.getSphere().setTranslateX(0 + WIDTH / 2);
         coulombCenter.getSphere().setTranslateY(HEIGHT / 2 - 0);
+
+        mouseLook = new MouseLook(camera);
     }
 
     public void setCameraOptions() {
@@ -78,29 +87,29 @@ public class MainApplication extends Application {
         camera = new PerspectiveCamera();
 
         //Setting camera position
-        camera.translateXProperty().set(0);
-        camera.translateYProperty().set(0);
+        camera.translateXProperty().set(-125);
+        camera.translateYProperty().set(-100);
         camera.translateZProperty().set(-700);
 
         camera.translateXProperty().addListener((observable, oldValue, newValue) -> {
             int x = (int) newValue.doubleValue();
             int y = (int) camera.getTranslateY();
             int z = (int) camera.getTranslateZ();
-            coordLabel.setText("      XYZ : " + x + " / " + y + " / " + z);
+            coordLabel.setText("      XYZ : " + x + " / " + -y + " / " + z);
         });
 
         camera.translateYProperty().addListener((observable, oldValue, newValue) -> {
             int x = (int) camera.getTranslateX();
             int y = (int) newValue.doubleValue();
             int z = (int) camera.getTranslateZ();
-            coordLabel.setText("      XYZ : " + x + " / " + y + " / " + z);
+            coordLabel.setText("      XYZ : " + x + " / " + -y + " / " + z);
         });
 
         camera.translateZProperty().addListener((observable, oldValue, newValue) -> {
             int x = (int) camera.getTranslateX();
             int y = (int) camera.getTranslateY();
             int z = (int) newValue.doubleValue();
-            coordLabel.setText("      XYZ : " + x + " / " + y + " / " + z);
+            coordLabel.setText("      XYZ : " + x + " / " + -y + " / " + z);
         });
     }
 
@@ -119,7 +128,7 @@ public class MainApplication extends Application {
     public void setSceneParameters() {
         scene.setFill(Color.valueOf("#181818"));
         scene.setCamera(camera);
-        scene.setOnMouseDragged(new MouseLook());
+        scene.setOnMouseDragged(mouseLook);
         scene.setRoot(group);
         scene.setFocusTraversable(true);
         scene.requestFocus();
@@ -178,12 +187,12 @@ public class MainApplication extends Application {
 
     }
 
-    public void addMaterialPoint(Point3D r0, Point3D v0, double mass) {
-        PointGraphics newPoint = new PointGraphics(10);
+    public void addMaterialPoint(Point3D r0, Point3D v0, double mass, double coulombConstant) {
+        PointGraphics newPoint = new PointGraphics(5);
         group.getChildren().add(newPoint.getSphere());
 
         MaterialPointMotion motion = new MaterialPointMotion();
-        motion.setCoulombConstant(this.coulombConstant);
+        motion.setCoulombConstant(coulombConstant);
         motion.setMaterialPoint(new MaterialPoint(mass));
         motion.setInitialRadiusVector(r0);
         motion.setInitialDerivativeRadiusVector(v0);
@@ -196,12 +205,12 @@ public class MainApplication extends Application {
         newPoint.changeColor(MPCOLOR);
     }
 
-    public void addBodyPoint(Point3D r0, Point3D v0, Point3D w0, double mass, Tensor J, Tensor B) {
-        PointGraphics newPoint = new PointGraphics(10);
+    public void addBodyPoint(Point3D r0, Point3D v0, Point3D w0, double mass, Tensor J, Tensor B, double coulombConstant) {
+        PointGraphics newPoint = new PointGraphics(5);
         group.getChildren().add(newPoint.getSphere());
 
         BodyPointMotion motion = new BodyPointMotion();
-        motion.setCoulombConstant(this.coulombConstant);
+        motion.setCoulombConstant(coulombConstant);
         motion.setBodyPoint(new BodyPoint(mass, J, B));
         motion.setInitialRadiusVector(r0);
         motion.setInitialVelocityTrans(v0);
@@ -216,38 +225,80 @@ public class MainApplication extends Application {
     }
 
     public void clear() {
-        motions.clear();
-    }
+        motions.keySet().forEach(k -> {
+            group.getChildren().remove(k.getSphere());
+        });
 
-    public void setCoulombConstant(double value) {
-        coulombConstant = value;
+        motions.clear();
+        clearTrajectories();
     }
 
     public void motionAll() {
         motions.values().forEach(v -> v.startMotion());
     }
 
+    public void saveDataToFile(List<Point3D> points) throws FileNotFoundException, UnsupportedEncodingException {
+        PrintWriter writerX = new PrintWriter("X.txt", "UTF-8");
+        PrintWriter writerY = new PrintWriter("Y.txt", "UTF-8");
+        PrintWriter writerZ = new PrintWriter("Z.txt", "UTF-8");
+        for (Point3D point : points) {
+            writerX.println(point.getX());
+            writerY.println(point.getY());
+            writerZ.println(point.getZ());
+        }
+
+        writerX.close();
+        writerY.close();
+        writerZ.close();
+    }
+
+    public void drawTrajectory(List<Point3D> points, Color color) {
+        ArrayList<org.fxyz3d.geometry.Point3D> screenPoints = new ArrayList<>();
+
+        for (Point3D point : points) {
+            screenPoints.add(new org.fxyz3d.geometry.Point3D(
+                    (float) point.getX() + WIDTH / 2,
+                    HEIGHT / 2 - (float) point.getY(),
+                    (float) point.getZ()
+            ));
+        }
+
+        PolyLine3DCustom trajectory = new PolyLine3DCustom(screenPoints, 3.0f, color);
+        trajectories.add(trajectory);
+        group.getChildren().addAll(trajectory);
+    }
+
+    public void clearTrajectories() {
+        for (PolyLine3DCustom trajectory : trajectories) {
+            group.getChildren().remove(trajectory);
+        }
+        trajectories.clear();
+    }
+
     public void animateAll() {
         motions.forEach((k, v) -> {
 
-            ArrayList<Point3D> points = v.getData().getRadiusVector();
+            List<Point3D> points = v.getData().getRadiusVector();
+
+            try {
+                saveDataToFile(points);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            if (v.getMotionPoint() instanceof BodyPoint) {
+                drawTrajectory(points, BPCOLOR);
+            } else if (v.getMotionPoint() instanceof MaterialPoint)
+                drawTrajectory(points, MPCOLOR);
+
             TranslateTransition[] transitions = new TranslateTransition[points.size()];
 
             TranslateTransition[] translateTransitions = new TranslateTransition[points.size()];
             for (int i = 0; i < points.size(); i++) {
-                translateTransitions[i] = new TranslateTransition(Duration.seconds(0.01), k.getSphere());
+                translateTransitions[i] = new TranslateTransition(Duration.seconds(0.005), k.getSphere());
                 translateTransitions[i].setToX(points.get(i).getX() + WIDTH / 2);
                 translateTransitions[i].setToY(HEIGHT / 2 - points.get(i).getY());
                 translateTransitions[i].setToZ(points.get(i).getZ());
-
-
-                Sphere mini = new Sphere(1);
-                mini.setTranslateX(points.get(i).getX() + WIDTH / 2);
-                mini.setTranslateY(HEIGHT / 2 - points.get(i).getY());
-                mini.setTranslateZ(points.get(i).getZ());
-                group.getChildren().add(mini);
-
-
             }
 
             SequentialTransition sequentialTransition = new SequentialTransition();
@@ -268,18 +319,19 @@ public class MainApplication extends Application {
         setSceneParameters();
 
 
-        addMaterialPoint(new Point3D(-200, 100, 0), new Point3D(2, 0, 0), 15);
+        /*
+        addMaterialPoint(new Point3D(-40, 10, 0), new Point3D(2, 0, 0), 10, A);
 
-        addBodyPoint(new Point3D(-200, 100, 0),
+
+        addBodyPoint(new Point3D(-40, 10, 0),
                 new Point3D(2, 0, 0),
-                new Point3D(0, 0, 0),
-                15,
-                new Tensor(10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0),
-                new Tensor(10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0)
+                new Point3D(4, 0, 0),
+                10,
+                new Tensor(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0),
+                new Tensor(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0),
+                A
         );
-
-
-
+         */
 
         addMaterialPointButton.setOnAction(event -> {
                     double mass = Double.parseDouble(massMaterialPointInput.getText());
@@ -297,74 +349,32 @@ public class MainApplication extends Application {
                             Double.parseDouble(numbers[2])
                     );
 
-                    addMaterialPoint(r0, v0, mass);
+                    double A = Double.parseDouble(coulombConstInput.getText());
 
+                    addMaterialPoint(r0, v0, mass, A);
+
+                    scene.requestFocus();
                 }
         );
 
         solveButton.setOnMouseClicked(event -> {
-            //double A = Double.parseDouble(coulombConstInput.getText());
-           //setCoulombConstant(A);
             motionAll();
             animateAll();
+
+            scene.requestFocus();
         });
 
         clearButton.setOnAction(event -> {
             clear();
         });
 
+        scene.setOnMouseClicked(event -> {
+            scene.requestFocus();
+        });
 
-        /*
-        PrintWriter writerX = new PrintWriter("X.txt", "UTF-8");
-        PrintWriter writerY = new PrintWriter("Y.txt", "UTF-8");
-        PrintWriter writerZ = new PrintWriter("Z.txt", "UTF-8");
-        for (Point3D point : points) {
-            writerX.println(point.getX());
-            writerY.println(point.getY());
-            writerZ.println(point.getZ());
-        }
-
-        writerX.close();
-        writerY.close();
-        writerZ.close();
-        */
 
         setKeyHandlers();
         stage.show();
-    }
-
-    static class MouseLook implements EventHandler<MouseEvent> {
-        private static Rotate rotation;
-        private static int oldX, newX;
-        private static boolean alreadyMoved = false;
-
-        @Override
-        public void handle(MouseEvent event) {
-            if (alreadyMoved) {
-                newX = (int) event.getScreenX();
-
-                if (oldX < newX) { // if mouse moved to right
-                    rotation = new Rotate(0.5,
-                            // camera rotates around its location
-                            camera.getTranslateX(), camera.getTranslateY(), camera.getTranslateZ(),
-                            Rotate.Y_AXIS);
-
-
-                } else if (oldX > newX) { // if mouse moved to left
-                    rotation = new Rotate(-0.5,
-                            // camera rotates around its location
-                            camera.getTranslateX(), camera.getTranslateY(), camera.getTranslateZ(),
-                            Rotate.Y_AXIS);
-
-                }
-                camera.getTransforms().addAll(rotation);
-
-                oldX = newX;
-            } else {
-                oldX = (int) event.getScreenX();
-                alreadyMoved = true;
-            }
-        }
     }
 
     public static void main(String[] args) {
