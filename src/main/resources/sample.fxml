@@ -36,33 +36,6 @@
                         </Label>
                      </children>
                   </HBox>
-                  <HBox alignment="CENTER" layoutX="10.0" layoutY="10.0" prefHeight="44.0" prefWidth="235.0">
-                     <children>
-                        <Label text="File" textFill="#a1a1a1">
-                           <font>
-                              <Font name="System Bold" size="18.0" />
-                           </font>
-                        </Label>
-                     </children>
-                  </HBox>
-                  <HBox alignment="CENTER" layoutX="10.0" layoutY="54.0" prefHeight="44.0" prefWidth="235.0">
-                     <children>
-                        <Label text="Plots" textFill="#a1a1a1">
-                           <font>
-                              <Font name="System Bold" size="18.0" />
-                           </font>
-                        </Label>
-                     </children>
-                  </HBox>
-                  <HBox alignment="CENTER" layoutX="10.0" layoutY="98.0" prefHeight="44.0" prefWidth="235.0">
-                     <children>
-                        <Label text="Settings" textFill="#a1a1a1">
-                           <font>
-                              <Font name="System Bold" size="18.0" />
-                           </font>
-                        </Label>
-                     </children>
-                  </HBox>
                   <HBox alignment="TOP_RIGHT" prefHeight="39.0" prefWidth="235.0">
                      <children>
                         <Label prefHeight="28.0" prefWidth="68.0" text="Coulomb:" textFill="#e40a0a" />
@@ -126,7 +99,7 @@
             <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="320.0" prefHeight="39.0" prefWidth="235.0">
                <children>
                   <Label prefHeight="28.0" prefWidth="68.0" text="Mass:" textFill="#a1a1a1" />
-                  <TextField alignment="TOP_LEFT" prefHeight="26.0" prefWidth="121.0" promptText="m">
+                  <TextField fx:id="massBodyPointInput" alignment="TOP_LEFT" prefHeight="26.0" prefWidth="121.0" promptText="m">
                      <HBox.margin>
                         <Insets right="15.0" />
                      </HBox.margin>
@@ -136,7 +109,7 @@
             <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="359.0" prefHeight="39.0" prefWidth="235.0">
                <children>
                   <Label prefHeight="28.0" prefWidth="68.0" text="R0 vector:" textFill="#a1a1a1" />
-                  <TextField alignment="TOP_LEFT" prefHeight="26.0" prefWidth="122.0" promptText="rx ry rz">
+                  <TextField fx:id="R0BodyInput" alignment="TOP_LEFT" prefHeight="26.0" prefWidth="122.0" promptText="rx ry rz">
                      <HBox.margin>
                         <Insets right="15.0" />
                      </HBox.margin>
@@ -146,7 +119,7 @@
             <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="359.0" prefHeight="39.0" prefWidth="235.0">
                <children>
                   <Label prefHeight="28.0" prefWidth="68.0" text="V0 vector" textFill="#a1a1a1" />
-                  <TextField alignment="TOP_LEFT" prefHeight="26.0" prefWidth="122.0" promptText="vx vy vz">
+                  <TextField fx:id="V0BodyInput" alignment="TOP_LEFT" prefHeight="26.0" prefWidth="122.0" promptText="vx vy vz">
                      <HBox.margin>
                         <Insets right="15.0" />
                      </HBox.margin>
@@ -156,7 +129,7 @@
             <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="359.0" prefHeight="39.0" prefWidth="235.0">
                <children>
                   <Label prefHeight="28.0" prefWidth="68.0" text="w0 vector" textFill="#a1a1a1" />
-                  <TextField alignment="TOP_LEFT" prefHeight="26.0" prefWidth="122.0" promptText="wx wy wz">
+                  <TextField fx:id="W0BodyInput" alignment="TOP_LEFT" prefHeight="26.0" prefWidth="122.0" promptText="wx wy wz">
                      <HBox.margin>
                         <Insets right="15.0" />
                      </HBox.margin>
@@ -166,7 +139,7 @@
             <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="359.0" prefHeight="39.0" prefWidth="235.0">
                <children>
                   <Label prefHeight="28.0" prefWidth="68.0" text="Tensor J" textFill="#a1a1a1" />
-                  <TextField alignment="TOP_LEFT" prefHeight="26.0" prefWidth="122.0" promptText="1 0 0 0 1 0 0 0 1">
+                  <TextField fx:id="TensorJ" alignment="TOP_LEFT" prefHeight="26.0" prefWidth="122.0" promptText="1 0 0 0 1 0 0 0 1">
                      <HBox.margin>
                         <Insets right="15.0" />
                      </HBox.margin>
@@ -176,7 +149,7 @@
             <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="625.0" prefHeight="39.0" prefWidth="235.0">
                <children>
                   <Label prefHeight="28.0" prefWidth="68.0" text="Tensor B" textFill="#a1a1a1" />
-                  <TextField alignment="TOP_LEFT" prefHeight="26.0" prefWidth="122.0" promptText="1 0 0 0 1 0 0 0 1">
+                  <TextField fx:id="TensorB" alignment="TOP_LEFT" prefHeight="26.0" prefWidth="122.0" promptText="1 0 0 0 1 0 0 0 1">
                      <HBox.margin>
                         <Insets right="15.0" />
                      </HBox.margin>
@@ -193,7 +166,7 @@
                         <Insets right="5.0" />
                      </HBox.margin>
                   </Button>
-                  <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="113.0" text="Add body-point" />
+                  <Button fx:id="addBodyPoint" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="113.0" text="Add body-point" />
                </children>
             </HBox>
             <Button fx:id="clearButton" mnemonicParsing="false" prefHeight="26.0" prefWidth="225.0" text="Clear" />
@@ -225,14 +198,76 @@
                   </Label>
                </children>
             </HBox>
-            <SubScene fx:id="scene" height="685.0" width="910.0">
-               <root>
-                  <Region />
-               </root>
-               <antiAliasing>
-                  <SceneAntialiasing fx:constant="BALANCED" />
-               </antiAliasing>
-            </SubScene>
+            <HBox alignment="TOP_RIGHT" prefHeight="691.0" prefWidth="1071.0">
+               <children>
+                  <SubScene fx:id="scene" height="685.0" width="910.0">
+                    <root>
+                      <Region />
+                    </root>
+                     <antiAliasing><SceneAntialiasing fx:constant="BALANCED" /></antiAliasing>
+                  </SubScene>
+                  <VBox alignment="TOP_RIGHT" prefHeight="200.0" prefWidth="100.0">
+                     <children>
+                        <HBox alignment="TOP_RIGHT" prefHeight="40.0" prefWidth="100.0">
+                           <children>
+                              <Label prefHeight="30.0" prefWidth="42.0" text="A" textFill="#a1a1a1" />
+                              <TextField prefHeight="31.0" prefWidth="47.0" promptText="A" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="10.0" prefHeight="40.0" prefWidth="100.0">
+                           <children>
+                              <Label prefHeight="30.0" prefWidth="42.0" text="m" textFill="#a1a1a1" />
+                              <TextField prefHeight="31.0" prefWidth="47.0" promptText="m" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="50.0" prefHeight="40.0" prefWidth="100.0">
+                           <children>
+                              <Label prefHeight="30.0" prefWidth="42.0" text="j" textFill="#a1a1a1" />
+                              <TextField prefHeight="31.0" prefWidth="47.0" promptText="j" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="90.0" prefHeight="40.0" prefWidth="100.0">
+                           <children>
+                              <Label prefHeight="30.0" prefWidth="42.0" text="b" textFill="#a1a1a1" />
+                              <TextField prefHeight="31.0" prefWidth="47.0" promptText="b" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="130.0" prefHeight="40.0" prefWidth="100.0">
+                           <children>
+                              <Label prefHeight="30.0" prefWidth="42.0" text="L" textFill="#a1a1a1" />
+                              <TextField prefHeight="31.0" prefWidth="47.0" promptText="L" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="170.0" prefHeight="40.0" prefWidth="100.0">
+                           <children>
+                              <Label prefHeight="30.0" prefWidth="42.0" text="d" textFill="#a1a1a1" />
+                              <TextField prefHeight="31.0" prefWidth="47.0" promptText="d" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="210.0" prefHeight="40.0" prefWidth="100.0">
+                           <children>
+                              <Label prefHeight="30.0" prefWidth="42.0" text="K1_i" textFill="#a1a1a1" />
+                              <TextField prefHeight="31.0" prefWidth="47.0" promptText="K1" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="250.0" prefHeight="40.0" prefWidth="100.0">
+                           <children>
+                              <Label prefHeight="30.0" prefWidth="42.0" text="Kz_k" textFill="#a1a1a1" />
+                              <TextField prefHeight="31.0" prefWidth="47.0" promptText="Kz" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="TOP_RIGHT" layoutX="10.0" layoutY="290.0" prefHeight="40.0" prefWidth="100.0">
+                           <children>
+                              <Label prefHeight="30.0" prefWidth="42.0" text="Kx_i" textFill="#a1a1a1" />
+                              <TextField prefHeight="31.0" prefWidth="47.0" promptText="Kx" />
+                           </children>
+                        </HBox>
+                        <Button mnemonicParsing="false" prefHeight="27.0" prefWidth="48.0" text="Add" />
+                        <ToggleButton fx:id="togglebutton" mnemonicParsing="false" prefHeight="29.0" prefWidth="50.0" text="СВЕТ" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
             <HBox alignment="CENTER" prefHeight="82.0" prefWidth="909.0">
                <children>
                   <ImageView fx:id="solveButton" fitHeight="56.0" fitWidth="102.0" pickOnBounds="true" preserveRatio="true">

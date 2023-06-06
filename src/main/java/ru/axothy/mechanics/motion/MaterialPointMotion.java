@@ -1,10 +1,15 @@
 package ru.axothy.mechanics.motion;
 
 import javafx.geometry.Point3D;
+import ru.axothy.mechanics.bodypoint.BodyPoint;
+import ru.axothy.mechanics.bodypoint.BodyPointMovingData;
 import ru.axothy.mechanics.bodypoint.MaterialPoint;
 import ru.axothy.mechanics.bodypoint.MaterialPointMovingData;
 import ru.axothy.mechanics.equationsolvers.EulerMethod;
+import ru.axothy.mechanics.equationsolvers.RungeKutta4;
+import ru.axothy.mechanics.equationsolvers.YoshidaMethod;
 
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 
 public class MaterialPointMotion implements Motion {
@@ -67,27 +72,25 @@ public class MaterialPointMotion implements Motion {
         return v.get(INITIAL);
     }
 
-    public void startMotion() {
+    public void startMotion(double h, int n) {
         MaterialPointEquation equation = new MaterialPointEquation(materialPoint.getMass(), A);
-        data = EulerMethod.solve(equation,
-                data.getRadiusVector().get(INITIAL),
-                v.get(INITIAL));
+        data = RungeKutta4.solve(equation, data.getRadiusVector().get(INITIAL), v.get(INITIAL));
     }
 
     public ArrayList<Point3D> getRadiusVectorData() {
         return data.getRadiusVector();
     }
 
-    public MaterialPointMovingData getData() {
-        return data;
+    public BodyPointMovingData getData() {
+        return (BodyPointMovingData) data;
     }
 
     public ArrayList<Point3D> getDerivativeRadiusVectorData() {
         return v;
     }
 
-    public MaterialPoint getMotionPoint() {
-        return materialPoint;
+    public BodyPoint getMotionPoint() {
+        return (BodyPoint) materialPoint;
     }
 
     @Override
@@ -100,7 +103,7 @@ public class MaterialPointMotion implements Motion {
         motion.setMaterialPoint(new MaterialPoint(10));
         motion.setInitialRadiusVector(new Point3D(-100, 40, 0));
         motion.setInitialDerivativeRadiusVector(new Point3D(Math.sqrt(20), 0, 0));
-        motion.startMotion();
+        motion.startMotion(0.0001, 250000);
         System.out.println(motion.getRadiusVectorData());
     }
 }

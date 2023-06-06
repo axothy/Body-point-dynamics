@@ -4,10 +4,8 @@ import javafx.geometry.Point3D;
 import ru.axothy.mechanics.bodypoint.BodyPoint;
 import ru.axothy.mechanics.bodypoint.BodyPointMovingData;
 import ru.axothy.mechanics.bodypoint.MaterialPoint;
-import ru.axothy.mechanics.equationsolvers.EulerMethodForSystem;
+import ru.axothy.mechanics.equationsolvers.*;
 import ru.axothy.mechanics.tensors.Tensor;
-
-import java.util.ArrayList;
 
 public class BodyPointMotion implements Motion {
     public static final int INITIAL = 0;
@@ -26,7 +24,7 @@ public class BodyPointMotion implements Motion {
         data = new BodyPointMovingData();
     }
 
-    public MaterialPoint getBodyPoint() {
+    public BodyPoint getBodyPoint() {
         return bodyPoint;
     }
 
@@ -76,17 +74,14 @@ public class BodyPointMotion implements Motion {
         return data.getVelocityRot().get(INITIAL);
     }
 
-    public void startMotion() {
-        BodyPointEquation equation = new BodyPointEquation(bodyPoint.getMass(),
+    public void startMotion(double step, int numberOfIterations) {
+        BodyPointEquationWithoutTensors equation = new BodyPointEquationWithoutTensors(bodyPoint.getMass(),
                 bodyPoint.getJ(),
                 bodyPoint.getB(),
                 A);
 
-
-        data = EulerMethodForSystem.solve(equation,
-                getInitialRadiusVector(),
-                getInitialVelocityTrans(),
-                getInitialVelocityRot());
+        data = SymplecticEulerForSystem.solve(equation, getInitialRadiusVector(), getInitialVelocityTrans(), getInitialVelocityRot(),
+                step, numberOfIterations);
     }
 
     public void setBodyPoint(BodyPoint bodyPoint) {
@@ -101,7 +96,7 @@ public class BodyPointMotion implements Motion {
         this.data = data;
     }
 
-    public MaterialPoint getMotionPoint() {
+    public BodyPoint getMotionPoint() {
         return bodyPoint;
     }
 
@@ -117,7 +112,7 @@ public class BodyPointMotion implements Motion {
         motion.setInitialVelocityTrans(new Point3D(2, 0, 0));
         motion.setInitialVelocityRot(new Point3D(0, 0, 0));
 
-        motion.startMotion();
+        motion.startMotion(0.0001, 250000);
         System.out.println(motion.data.getRadiusVector());
     }
 }

@@ -24,34 +24,45 @@ public class BodyPointEquation {
     }
 
     //Not efficient...
-    public Point3D equationRightSide(Point3D radiusVector, Point3D dOmega) {
-        double coeff = 1.0 / mass;
 
-        double x = -coeff * ((A * radiusVector.getX()) / (Math.pow(radiusVector.distance(ZERO), 3.0 / 2.0))) -
-                coeff * (B.dotProduct(dOmega).getX());
+    public Point3D equationRightSide1(Point3D radiusVector, Point3D velocity, Point3D omega) {
+        Tensor coeff = J.multiply(mass).subtract(B.multiply(B)); //mJ-B^2
+        double rCube = Math.pow(radiusVector.distance(ZERO), 3.0 / 2.0); //R^3
 
-        double y = -coeff * ((A * radiusVector.getY()) / (Math.pow(radiusVector.distance(ZERO), 3.0 / 2.0))) -
-                coeff * (B.dotProduct(dOmega).getY());
+        double vX = (J.multiply(-A).multiply(coeff.inverse()).dotProduct(radiusVector).getX() / rCube) -
+                (coeff.inverse().dotProduct(B.multiply(B).dotProduct(omega).crossProduct(velocity))).getX();
 
-        double z = -coeff * ((A * radiusVector.getZ()) / (Math.pow(radiusVector.distance(ZERO), 3.0 / 2.0))) -
-                coeff * (B.dotProduct(dOmega).getZ());
+        double vY = (J.multiply(-A).multiply(coeff.inverse()).dotProduct(radiusVector).getY() / rCube) -
+                (coeff.inverse().dotProduct(B.multiply(B).dotProduct(omega).crossProduct(velocity))).getY();
 
-        return new Point3D(x, y, z);
+        double vZ = (J.multiply(-A).multiply(coeff.inverse()).dotProduct(radiusVector).getZ() / rCube) -
+                (coeff.inverse().dotProduct(B.multiply(B).dotProduct(omega).crossProduct(velocity))).getZ();
+
+        return new Point3D(vX, vY, vZ);
+
     }
 
-    //Not efficient...
-    public Point3D equationRightSide2(Point3D d2RadiusVector, Point3D dRadiusVector, Point3D omega) {
-        Tensor inverseJ = J.inverse();
+    public Point3D equationRightSide2(Point3D radiusVector, Point3D velocity, Point3D omega) {
+        Tensor coeff = B.multiply(B).subtract(J.multiply(mass)); //B^2-mJ
+        double rCube = Math.pow(radiusVector.distance(ZERO), 3.0 / 2.0); //R^3
 
-        double omega_x = (inverseJ.dotProduct((B.dotProduct(omega).crossProduct(dRadiusVector)).subtract(B.dotProduct(d2RadiusVector))))
-                .getX();
+        double wX = ((B.multiply(-A)).multiply(coeff.inverse()).dotProduct(radiusVector).getX() / rCube) -
+                (coeff.inverse().dotProduct(B.multiply(mass).dotProduct(omega).crossProduct(velocity))).getX();
 
-        double omega_y = (inverseJ.dotProduct((B.dotProduct(omega).crossProduct(dRadiusVector)).subtract(B.dotProduct(d2RadiusVector))))
-                .getY();
+        double wY = ((B.multiply(-A)).multiply(coeff.inverse()).dotProduct(radiusVector).getY() / rCube) -
+                (coeff.inverse().dotProduct(B.multiply(mass).dotProduct(omega).crossProduct(velocity))).getY();
 
-        double omega_z = (inverseJ.dotProduct((B.dotProduct(omega).crossProduct(dRadiusVector)).subtract(B.dotProduct(d2RadiusVector))))
-                .getZ();
+        double wZ = ((B.multiply(-A)).multiply(coeff.inverse()).dotProduct(radiusVector).getZ() / rCube) -
+                (coeff.inverse().dotProduct(B.multiply(mass).dotProduct(omega).crossProduct(velocity))).getZ();
 
-        return new Point3D(omega_x, omega_y, omega_z);
+        return new Point3D(wX, wY, wZ);
+    }
+
+    public Point3D equationRightSide3(Point3D velocity) {
+        double rX = velocity.getX();
+        double rY = velocity.getY();
+        double rZ = velocity.getZ();
+
+        return new Point3D(rX, rY, rZ);
     }
 }

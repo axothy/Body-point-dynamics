@@ -5,5 +5,4 @@ import ru.axothy.mechanics.bodypoint.MaterialPoint;
 import ru.axothy.mechanics.tensors.Tensor;
 
 public interface Equation {
-    Point3D equationRightSide(Point3D radiusVector);
 }

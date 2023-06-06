@@ -3,42 +3,33 @@ package ru.axothy.mechanics.equationsolvers;
 import javafx.geometry.Point3D;
 import ru.axothy.mechanics.bodypoint.MaterialPointMovingData;
 import ru.axothy.mechanics.motion.Equation;
+import ru.axothy.mechanics.motion.MaterialPointEquation;
 import ru.axothy.mechanics.tensors.Tensor;
 
 import java.util.ArrayList;
 
 public class EulerMethod {
-    public static MaterialPointMovingData solve(Equation equation, Point3D r0, Point3D v0) {
-        ArrayList<Point3D> result = new ArrayList<>();
-        result.add(r0);
+    public static MaterialPointMovingData solve(MaterialPointEquation equation, Point3D r0, Point3D v0) {
+        ArrayList<Point3D> v = new ArrayList<>();
+        ArrayList<Point3D> r = new ArrayList<>();
+        r.add(r0);
+        v.add(v0);
 
-        double x = r0.getX();
-        double y = r0.getY();
-        double dx = v0.getX();
-        double dy = v0.getY();
+        double dt = 0.0001;
 
-        // Задаем шаг по времени
-        double dt = 0.1;
+        int i = 1;
+        do {
+            double vX = v.get(i - 1).getX() + dt * equation.equationRightSide1(r.get(i - 1)).getX();
+            double vY = v.get(i - 1).getY() + dt * equation.equationRightSide1(r.get(i - 1)).getY();
+            v.add(new Point3D(vX, vY, Point3D.ZERO.getZ()));
 
-        // Вычисляем значения производных и новые значения x и y для каждого шага по времени
-        for (double t = 0; t < 25000; t += dt) {
-            // Вычисляем значения производных
-            double d2x = equation.equationRightSide(new Point3D(x, y, Point3D.ZERO.getZ())).getX();
-            double d2y = equation.equationRightSide(new Point3D(x, y, Point3D.ZERO.getZ())).getY();
+            double rX = r.get(i - 1).getX() + dt * equation.equationRightSide2(v.get(i - 1)).getX();
+            double rY = r.get(i - 1).getY() + dt * equation.equationRightSide2(v.get(i - 1)).getY();
+            r.add(new Point3D(rX, rY, Point3D.ZERO.getZ()));
 
-            // Вычисляем новые значения x и y
-            double x_new = x + dt * dx;
-            double y_new = y + dt * dy;
+            i++;
+        } while (i < 250000);
 
-            // Обновляем значения x, y, dx/dt и dy/dt для следующего шага по времени
-            x = x_new;
-            y = y_new;
-            dx += dt * d2x;
-            dy += dt * d2y;
-
-            result.add(new Point3D(x, y, 0));
-        }
-
-        return new MaterialPointMovingData(result);
+        return new MaterialPointMovingData(r, v);
     }
 }

@@ -17,7 +17,7 @@ public class BodyPointMovingData extends MaterialPointMovingData {
     public BodyPointMovingData(ArrayList<Point3D> radiusVector,
                                ArrayList<Point3D> velocityTrans,
                                ArrayList<Point3D> velocityRot) {
-        super(radiusVector);
+        super(radiusVector, velocityTrans);
         this.velocityTrans = velocityTrans;
         this.velocityRot = velocityRot;
     }

@@ -2,25 +2,28 @@ package ru.axothy.mechanics;
 
 import javafx.animation.*;
 import javafx.application.Application;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Point3D;
 import javafx.scene.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
-import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import ru.axothy.mechanics.bodypoint.BodyPoint;
+import ru.axothy.mechanics.bodypoint.BodyPointMovingData;
 import ru.axothy.mechanics.bodypoint.MaterialPoint;
+import ru.axothy.mechanics.bodypoint.MaterialPointMovingData;
+import ru.axothy.mechanics.energy.BodyPointEnergy;
+import ru.axothy.mechanics.energy.MaterialPointEnergy;
 import ru.axothy.mechanics.graphics.CoulombCenterGraphics;
 import ru.axothy.mechanics.graphics.MouseLook;
 import ru.axothy.mechanics.graphics.PointGraphics;
@@ -38,14 +41,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 public class MainApplication extends Application {
     private static final String MAIN_LABEL = "Body-point motion mechanics";
     public static final int WIDTH = 910;
     public static final int HEIGHT = 685;
-    public Line axeX;
-    public Line axeY;
     public Group group;
     public Map<PointGraphics, Motion> motions = new HashMap<>();
     public ArrayList<PolyLine3DCustom> trajectories = new ArrayList<>();
@@ -53,18 +55,23 @@ public class MainApplication extends Application {
     public static PerspectiveCamera camera;
     public SubScene scene;
     public MouseLook mouseLook;
-    public Button addMaterialPointButton;
-    public TextField massMaterialPointInput;
-    public TextField R0MaterialInput;
-    public TextField V0MaterialInput;
+    public Button addMaterialPointButton, addBodyPointButton;
+    public TextField massMaterialPointInput, massBodyPointInput;
+    public TextField R0MaterialInput, R0BodyInput;
+    public TextField V0MaterialInput, V0BodyInput;
+    public TextField W0BodyInput, TensorJInput, TensorBInput;
     public TextField coulombConstInput;
     public Label coordLabel;
+    public ToggleButton lightButton;
 
     public ImageView solveButton;
     public Button clearButton;
 
     public static final Color MPCOLOR = Color.RED;
     public static final Color BPCOLOR = Color.WHITE;
+
+    public static final double h = 0.00001;
+    public static final int n = 2500000;
 
 
     public void init() {
@@ -123,6 +130,15 @@ public class MainApplication extends Application {
         coulombConstInput = (TextField) root.lookup("#coulombConst");
         clearButton = (Button) root.lookup("#clearButton");
         coordLabel = (Label) root.lookup("#CoordsLabel");
+
+        addBodyPointButton = (Button) root.lookup("#addBodyPoint");
+        massBodyPointInput = (TextField) root.lookup("#massBodyPointInput");
+        R0BodyInput = (TextField) root.lookup("#R0BodyInput");
+        V0BodyInput = (TextField) root.lookup("#V0BodyInput");
+        W0BodyInput = (TextField) root.lookup("#W0BodyInput");
+        TensorJInput = (TextField) root.lookup("#TensorJ");
+        TensorBInput = (TextField) root.lookup("#TensorB");
+        lightButton = (ToggleButton) root.lookup("#togglebutton");
     }
 
     public void setSceneParameters() {
@@ -155,6 +171,7 @@ public class MainApplication extends Application {
         Group axisGroup = new Group();
         axisGroup.getChildren().addAll(xAxis, yAxis, zAxis);
         group.getChildren().add(axisGroup);
+
     }
 
     public void setKeyHandlers() {
@@ -234,7 +251,7 @@ public class MainApplication extends Application {
     }
 
     public void motionAll() {
-        motions.values().forEach(v -> v.startMotion());
+        motions.values().forEach(v -> v.startMotion(h, n));
     }
 
     public void saveDataToFile(List<Point3D> points) throws FileNotFoundException, UnsupportedEncodingException {
@@ -252,6 +269,20 @@ public class MainApplication extends Application {
         writerZ.close();
     }
 
+    public void saveEnergy(List<Double> energy, String filename) throws FileNotFoundException, UnsupportedEncodingException {
+        PrintWriter writerE = new PrintWriter(filename, "UTF-8");
+        PrintWriter writerI = new PrintWriter("I.txt", "UTF-8");
+        int i = 0;
+        for (Double value : energy) {
+            writerE.println(value);
+            writerI.println(i);
+            i++;
+        }
+
+        writerE.close();
+        writerI.close();
+    }
+
     public void drawTrajectory(List<Point3D> points, Color color) {
         ArrayList<org.fxyz3d.geometry.Point3D> screenPoints = new ArrayList<>();
 
@@ -263,7 +294,7 @@ public class MainApplication extends Application {
             ));
         }
 
-        PolyLine3DCustom trajectory = new PolyLine3DCustom(screenPoints, 3.0f, color);
+        PolyLine3DCustom trajectory = new PolyLine3DCustom(screenPoints, 1.5f, color);
         trajectories.add(trajectory);
         group.getChildren().addAll(trajectory);
     }
@@ -280,12 +311,14 @@ public class MainApplication extends Application {
 
             List<Point3D> points = v.getData().getRadiusVector();
 
+
             try {
                 saveDataToFile(points);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
 
+            /*
             if (v.getMotionPoint() instanceof BodyPoint) {
                 drawTrajectory(points, BPCOLOR);
             } else if (v.getMotionPoint() instanceof MaterialPoint)
@@ -295,7 +328,7 @@ public class MainApplication extends Application {
 
             TranslateTransition[] translateTransitions = new TranslateTransition[points.size()];
             for (int i = 0; i < points.size(); i++) {
-                translateTransitions[i] = new TranslateTransition(Duration.seconds(0.005), k.getSphere());
+                translateTransitions[i] = new TranslateTransition(Duration.seconds(0.0005), k.getSphere());
                 translateTransitions[i].setToX(points.get(i).getX() + WIDTH / 2);
                 translateTransitions[i].setToY(HEIGHT / 2 - points.get(i).getY());
                 translateTransitions[i].setToZ(points.get(i).getZ());
@@ -306,6 +339,76 @@ public class MainApplication extends Application {
 
             sequentialTransition.play();
 
+*/
+        });
+
+
+        energy();
+    }
+
+
+    /*
+    public void energyMP() {
+        motions.forEach((k, v) -> {
+            MaterialPointEnergy energy = new MaterialPointEnergy();
+            energy.setMaterialPoint(v.getMotionPoint());;
+            energy.setCoulombConst(v.getCoulombConstant());
+            energy.setMovingData(v.getData());
+
+            ArrayList<Double> energies = energy.getEnergy();
+            try {
+                saveEnergy(energies, "Energy.txt");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            ArrayList<Double> errors = energy.getRelativeDev();
+            try {
+                saveEnergy(errors, "rlDev.txt");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            System.out.println(energy.stDev(energies, 500000));
+        });
+    } */
+
+    public void energy() {
+        motions.forEach((k, v) -> {
+            BodyPointEnergy energy = new BodyPointEnergy();
+            energy.setMaterialPoint(v.getMotionPoint());
+            energy.setCoulombConst(v.getCoulombConstant());
+            energy.setMovingData(v.getData());
+
+            ArrayList<Double> energies = energy.getEnergy();
+            try {
+                saveEnergy(energies, "Energy_body_point.txt");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            ArrayList<Double> errors = energy.getRelativeDev();
+            try {
+                saveEnergy(errors, "Relative_Error.txt");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            System.out.println(energy.stDev(energies, 250000));
+        });
+    }
+
+
+
+    public void light() {
+        AmbientLight light = new AmbientLight(Color.WHITE);
+
+        lightButton.setOnAction(event -> {
+            if (lightButton.isSelected()) {
+                group.getChildren().add(light);
+            } else {
+                group.getChildren().remove(light);
+            }
         });
     }
 
@@ -314,24 +417,28 @@ public class MainApplication extends Application {
         Parent root = FXMLLoader.load(getClass().getResource("/sample.fxml"));
         stage.setTitle(MAIN_LABEL);
         stage.setScene(new Scene(root, 1200, 800));
+        stage.getIcons().add(new Image("elasticity.png"));
         initElements(root);
         init();
         setSceneParameters();
 
+        light();
+
+
+        addBodyPoint(new Point3D(-200, 49, 0), new Point3D(7.058, 0, 6.86),
+                new Point3D(-2.941, 0, -9.8), 1, Tensor.UNARY_TENSOR, Tensor.UNARY_TENSOR.multiply(0.7),
+                -0.5);
+
+
+        // addMaterialPoint(new Point3D(1,0,0), new Point3D(0,1.2,0), 1, 1);
 
         /*
-        addMaterialPoint(new Point3D(-40, 10, 0), new Point3D(2, 0, 0), 10, A);
-
-
-        addBodyPoint(new Point3D(-40, 10, 0),
-                new Point3D(2, 0, 0),
-                new Point3D(4, 0, 0),
-                10,
-                new Tensor(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0),
-                new Tensor(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0),
-                A
-        );
+                VERY GOOD EXAMPLE:
+                addBodyPoint(new Point3D(-500, 200.8, 0), new Point3D(7.058, 0, 6.86),
+                new Point3D(-2.941, 0, -9.8), 1, Tensor.UNARY_TENSOR, Tensor.UNARY_TENSOR.multiply(0.7),
+                -2);
          */
+
 
         addMaterialPointButton.setOnAction(event -> {
                     double mass = Double.parseDouble(massMaterialPointInput.getText());
@@ -357,7 +464,66 @@ public class MainApplication extends Application {
                 }
         );
 
+        addBodyPointButton.setOnAction(event -> {
+                    double mass = Double.parseDouble(massBodyPointInput.getText());
+                    String[] numbers = R0BodyInput.getText().split(" ");
+                    Point3D r0 = new Point3D(
+                            Double.parseDouble(numbers[0]),
+                            Double.parseDouble(numbers[1]),
+                            Double.parseDouble(numbers[2])
+                    );
+
+                    numbers = V0BodyInput.getText().split(" ");
+                    Point3D v0 = new Point3D(
+                            Double.parseDouble(numbers[0]),
+                            Double.parseDouble(numbers[1]),
+                            Double.parseDouble(numbers[2])
+                    );
+
+                    numbers = W0BodyInput.getText().split(" ");
+                    Point3D w0 = new Point3D(
+                            Double.parseDouble(numbers[0]),
+                            Double.parseDouble(numbers[1]),
+                            Double.parseDouble(numbers[2])
+                    );
+
+                    //Bad practice:
+
+                    numbers = TensorJInput.getText().split(" ");
+
+                    Tensor J;
+                    if (numbers[0].equals("E")) {
+                        J = Tensor.UNARY_TENSOR;
+                    } else {
+                        Double[] arr = new Double[numbers.length];
+                        for (int i = 0; i < numbers.length; i++) {
+                            arr[i] = Double.parseDouble(numbers[i]);
+                        }
+                        J = new Tensor(arr);
+                    }
+
+                    numbers = TensorBInput.getText().split(" ");
+
+                    Tensor B;
+                    if (numbers[0].equals("E")) {
+                        B = Tensor.UNARY_TENSOR;
+                    } else {
+                        Double[] arr2 = new Double[numbers.length];
+                        for (int i = 0; i < numbers.length; i++) {
+                            arr2[i] = Double.parseDouble(numbers[i]);
+                        }
+                        B = new Tensor(arr2);
+                    }
+
+                    double A = Double.parseDouble(coulombConstInput.getText());
+                    addBodyPoint(r0, v0, w0, mass, J, B, A);
+
+                    scene.requestFocus();
+                }
+        );
+
         solveButton.setOnMouseClicked(event -> {
+            clearTrajectories();
             motionAll();
             animateAll();
 
@@ -371,7 +537,6 @@ public class MainApplication extends Application {
         scene.setOnMouseClicked(event -> {
             scene.requestFocus();
         });
-
 
         setKeyHandlers();
         stage.show();

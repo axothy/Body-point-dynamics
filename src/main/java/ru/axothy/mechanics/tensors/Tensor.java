@@ -57,6 +57,56 @@ public class Tensor {
         return new Tensor(outer);
     }
 
+    public Tensor subtract(Tensor tensor) {
+        ArrayList<ArrayList<Double>> outer = new ArrayList<>();
+        for (int i = 0; i < DIMENSION; i++) {
+            ArrayList<Double> inner = new ArrayList<>();
+            for (int j = 0; j < DIMENSION; j++) {
+                inner.add(this.getArray().get(i).get(j) - tensor.getArray().get(i).get(j));
+            }
+            outer.add(inner);
+        }
+
+        return new Tensor(outer);
+    }
+
+    public Tensor add(Tensor tensor) {
+        ArrayList<ArrayList<Double>> outer = new ArrayList<>();
+        for (int i = 0; i < DIMENSION; i++) {
+            ArrayList<Double> inner = new ArrayList<>();
+            for (int j = 0; j < DIMENSION; j++) {
+                inner.add(this.getArray().get(i).get(j) + tensor.getArray().get(i).get(j));
+            }
+            outer.add(inner);
+        }
+
+        return new Tensor(outer);
+    }
+
+    public Tensor multiply(Tensor tensor) {
+        double[][] matrix = new double[DIMENSION][DIMENSION];
+
+        for (int i = 0; i < DIMENSION; i++) {
+            for (int j = 0; j < DIMENSION; j++) {
+                for (int k = 0; k < DIMENSION; k++) {
+                    matrix[i][j] += this.getArray().get(i).get(k) * tensor.getArray().get(k).get(j);
+                }
+            }
+        }
+
+        Double[] result = new Double[DIMENSION * DIMENSION];
+
+        int k = 0;
+        for (int i = 0; i < DIMENSION; i++) {
+            for (int j = 0; j < DIMENSION; j++) {
+                result[k] = matrix[i][j];
+                k++;
+            }
+        }
+
+        return new Tensor(result);
+    }
+
     public Point3D dotProduct(Point3D vector) {
         double[] points = new double[DIMENSION];
 
@@ -110,7 +160,9 @@ public class Tensor {
     }
 
     public static void main(String[] args) {
-        Tensor tensor = new Tensor(3.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0);
-        System.out.println(tensor.inverse());
+        Tensor tensor = new Tensor(3.0, 2.0, 3.0, 2.0, 5.0, 6.0, 7.0, 8.0, 9.0);
+        Tensor tensor2 = new Tensor(0.0, 3.0, 4.0, 1.0, -1.0, 3.0, 3.0, 8.0, -2.0);
+
+        System.out.println(tensor.add(tensor2));
     }
 }
